@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class ChatController {
 
-    @MessageMapping("/sendmessage")
     //maps web socket messages to its destination. When someone sends a message to /sendmessage endpoint it will send that
     // message to whichever endpoint you write in the @sendto annotation
+    @MessageMapping("/sendMessage")
     @SendTo("/topic/messages") //recieves messages from /topic/messages
     public ChatMessage sendMessage(ChatMessage message){
         return message;
