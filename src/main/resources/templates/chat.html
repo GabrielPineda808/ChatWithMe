@@ -4,6 +4,9 @@
         <meta charset="UTF-8">
         <title>ChatWithMe</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script> <!--backup for clients that do not allow web socket connections-->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script> <!-- Struture real time messaging and receiving on two way newtworks -->
+
     </head>
     <body>
         <div class="container mt-4">
@@ -22,4 +25,44 @@
             </div>
         </div>
     </body>
+    <script>
+        function setConnected(connected){ //enables and disables the send message button based on if the user is connected to the server or not.
+            document.getElementById('sendMessage').disabled = !connected; //grabbing the button by its id and setting its disabled property to the opposite of its current state
+        };
+        function connect(){ //connect web socket
+            var socket = new SockJS('/chat'); //initializes a new SockJS client-side connection
+            stompClient = Stomp.over(socket); //stomp instance operating over socket connection
+            stompClient.connect({}, function (frame){ //{}, represents an empty object for connection headers
+                //frame: This parameter represents the CONNECTED frame received from the STOMP broker upon successful connection
+                // This frame can contain information about the session, server details, etc.
+                setConnected(true); //calling function to toggle button
+                stompClient.subscribe('/topic/messages', function(message){
+                    showMessage(JSON.parse(message.body)); // display method to html body method called when message is sent to endpoint
+                    });
+            });
+        };
+
+        function showMessage(message){
+            var chat = document.getElementById('chat');
+            var messageElement = document.createElement('div')
+
+            messageElement.textContent = message.sender + ' : ' + message.content;
+            messageElement.className = "border-bottom mb-1";
+            chat.appendChild(messageElement)
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function sendMessage(){
+           var sender = document.getElementById('sendInput').value;
+           var content = document.getElementById('messageInput').value;
+           var chatMessage = {
+                sender: sender,
+                content: content
+           }
+           stompClient.send("/app/sendMessage", {}, JSON.stringify(chatMessage));
+           document.getElementById('messageInput').value = '';
+        }
+        document.getElementById('sendMessage').onclick = sendMessage;
+        window.onload = connect;
+    </script>
 </html>
